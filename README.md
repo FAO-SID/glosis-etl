@@ -333,6 +333,6 @@ This project is developed by the **Global Soil Partnership** at the **Food and A
 
 ## Contact
 
-- **Author**: [FAO-SID Team]
+- **Author**: FAO-SID Team
 - **Organization**: [FAO Global Soil Partnership](https://www.fao.org/global-soil-partnership/)
 - **Repository**: [github.com/FAO-SID/glosis-etl](https://github.com/FAO-SID/glosis-etl)
