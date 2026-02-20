@@ -1,0 +1,42 @@
+# ============================================================================
+# GLOSIS ETL - .gitignore
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# R / RStudio
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Environment variables (contains passwords!)
+.env
+
+# Docker volumes and runtime
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
+*~
+
+# Large database dumps (keep the .sql init script tracked)
+# Uncomment if the SQL dump is too large for git:
+# init-scripts/*.sql
+
+# Agent / AI tool artifacts
+.gemini/
+.agents/

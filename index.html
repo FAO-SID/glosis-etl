@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GloSIS ETL – Soil Data Harmonization</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        /* Logo-based Palette */
+        :root {
+            /* The gradation from the logo: Dark Earth -> Clay/Rust -> Bright Sun/Grid */
+            --c-step1: #3E2723; /* Dark Brown */
+            --c-step2: #8D4004; /* Rust/Copper */
+            --c-step3: #E65100; /* Orange */
+            
+            --bg-light: #fdfbf7; /* Very warm light gray */
+            --text-dark: #2d3748;
+            --text-muted: #596170;
+            
+            --shadow-card: 0 4px 20px rgba(62, 39, 35, 0.08);
+            --shadow-hover: 0 10px 25px rgba(62, 39, 35, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            /* Gradient matching the logo flow */
+            background: linear-gradient(135deg, var(--c-step1) 0%, var(--c-step2) 60%, var(--c-step3) 100%);
+            color: white;
+            padding: 25px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .brand-logo {
+            height: 200px;
+            width: auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .header-title h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header-title p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        /* UPDATED FAO LOGO STYLE */
+        .fao-logo-container {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fao-logo-img {
+            height: 100px; /* Increased size slightly */
+            width: auto;
+            /* Removed the invert filter so original colors show */
+            display: block;
+        }
+
+        /* MAIN CONTAINER */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* INTRODUCTION TEXT */
+        .intro-section {
+            text-align: center;
+            margin-bottom: 50px;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .intro-section h2 {
+            color: var(--c-step1);
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+        }
+
+        .intro-section p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        /* 3-COLUMN GRID */
+        .etl-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 30px;
+            position: relative;
+            align-items: stretch;
+        }
+
+        /* CARDS */
+        .app-card {
+            background: white;
+            border-radius: 12px;
+            padding: 35px 25px;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            border-top: 6px solid;
+            position: relative;
+        }
+
+        .app-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .step-tag {
+            background: #eee;
+            color: #555;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 20px;
+            align-self: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .app-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .app-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            flex-grow: 1;
+            line-height: 1.7;
+        }
+
+        /* COLOR THEMES PER CARD */
+        .card-1 { border-color: var(--c-step1); }
+        .card-1 h3 { color: var(--c-step1); }
+        .card-1 .card-icon { color: var(--c-step1); }
+        
+        .card-2 { border-color: var(--c-step2); }
+        .card-2 h3 { color: var(--c-step2); }
+        .card-2 .card-icon { color: var(--c-step2); }
+
+        .card-3 { border-color: var(--c-step3); }
+        .card-3 h3 { color: var(--c-step3); }
+        .card-3 .card-icon { color: var(--c-step3); }
+
+        /* Flow Arrow */
+        .app-card:not(:last-child)::after {
+            content: "➜";
+            position: absolute;
+            right: -25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.5rem;
+            color: #dcdcdc;
+            z-index: 1;
+        }
+
+        /* BUTTONS */
+        .btn-launch {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .btn-launch:hover { opacity: 0.9; }
+        .btn-1 { background-color: var(--c-step1); }
+        .btn-2 { background-color: var(--c-step2); }
+        .btn-3 { background-color: var(--c-step3); }
+
+        .card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #333;
+            color: #aaa;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+
+        @media (max-width: 900px) {
+            header { padding: 20px; flex-direction: column; text-align: center; gap: 15px; }
+            .header-left { flex-direction: column; }
+            .etl-grid { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+            .app-card:not(:last-child)::after {
+                content: "⬇"; right: 50%; top: auto; bottom: -30px; transform: translateX(50%);
+            }
+            .app-card { margin-bottom: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <img src="www/glosis_maize.png" alt="GloSIS Maize" class="brand-logo">
+        <div class="header-title">
+            <h1>GloSIS ETL</h1>
+            <p>Standardizing Soil Data to ISO-28258</p>
+        </div>
+    </div>
+    
+    <div class="fao-logo-container">
+        <img src="www/fao_logo1.png" alt="FAO" class="fao-logo-img">
+    </div>
+</header>
+
+<div class="container">
+    
+    <div class="intro-section">
+        <h2>GloSIS Database Readiness Pipeline</h2>
+        <p>
+            Complete ETL tools for standardizing soil data to ISO-28258 and GloSIS.
+        </p>
+    </div>
+
+    <div class="etl-grid">
+        
+        <div class="app-card card-1">
+            <span class="step-tag">Step 01: Extract & Transform</span>
+            <div class="card-icon">⚙️</div>
+            <h3>Data Harmonization</h3>
+            <p>
+                The entry point for soil data. This tool analyzes <strong>raw soil datasets</strong>, detects errors, and performs unit conversions. It outputs a strictly structured, harmonized Excel template ready for further processing.
+            </p>
+            <a href="/harmonization/" class="btn-launch btn-1">
+                Launch Harmonizer
+            </a>
+        </div>
+
+        <div class="app-card card-2">
+            <span class="step-tag">Step 02: Load</span>
+            <div class="card-icon">💾</div>
+            <h3>Database Injection</h3>
+            <p>
+                Takes the harmonized Excel template from Step 1 and injects the soil data into a PostgreSQL GloSIS database. It maps the data directly to the database using <strong> ISO-28258</strong> standards.
+            </p>
+            <a href="/standardization/" class="btn-launch btn-2">
+                Launch Injector
+            </a>
+        </div>
+
+        <div class="app-card card-3">
+            <span class="step-tag">Step 03: Visualize</span>
+            <div class="card-icon">🗺️</div>
+            <h3>Data Visualization</h3>
+            <p>
+                Connects to the PostgreSQL GloSIS database created in Step 2. It visualizes the harmonized <strong>soil data points</strong> on an interactive map and displays analytical tables to verify database integrity.
+            </p>
+            <a href="/dataviewer/" class="btn-launch btn-3">
+                Launch Viewer
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+<footer>
+    <p>&copy; 2026 GloSIS ETL Pipeline. Standardizing Soil Data to ISO-28258.</p>
+</footer>
+
+</body>
+</html>

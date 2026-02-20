@@ -1,0 +1,305 @@
+---
+title: "GloSIS ISO-28258 Database"
+author: "Global Soil Partnership"
+output:
+  flexdashboard::flex_dashboard:
+    theme: paper
+    logo: www/fao_logo2.png
+    favicon: www/fao_logo1.png
+---
+
+```{r setup, include=FALSE}
+#lapply(c("shiny","flexdashboard","rpostgis","DBI","RPostgres","DT","crosstalk","leaflet","RColorBrewer","viridis","dplyr","tidyr","reactable","reactablefmtr","sparkline","readxl"), library, character.only = TRUE)
+lapply(c("shiny","flexdashboard","DBI","RPostgres","DT","crosstalk","leaflet","RColorBrewer","viridis","dplyr","tidyr","reactable","reactablefmtr","sparkline","readxl"), library, character.only = TRUE)
+
+#library(aqp)
+#library(ggplot2)
+#library(plotly)
+
+```
+
+```{r postgres, include=FALSE}
+# Database connection setup
+dbname <- isolate(input$db_name_input)
+con <- dbConnect(RPostgres::Postgres(), dbname = dbname, host = host_name, port = port_number, user = user_name, password = password_name)
+
+# Query for site and project data
+query <- "
+SELECT 
+    pr.name AS project_name,
+    s.site_code,
+    opc.property_phys_chem_id,
+    e.element_id,
+    e.profile_id,
+    e.order_element,
+    e.upper_depth,
+    e.lower_depth,
+    e.type,
+    spc.code,  -- Include specimen_code
+    ST_X(pl.position::geometry) AS longitude,  -- Extract longitude
+    ST_Y(pl.position::geometry) AS latitude   -- Extract latitude
+FROM 
+    core.result_phys_chem rpc
+JOIN 
+    core.element e ON rpc.specimen_id = e.element_id  
+JOIN 
+    core.profile p ON e.profile_id = p.profile_id
+JOIN 
+    core.plot pl ON p.plot_id = pl.plot_id
+JOIN 
+    core.site s ON pl.site_id = s.site_id
+JOIN 
+    core.project_site sp ON s.site_id = sp.site_id
+JOIN 
+    core.project pr ON sp.project_id = pr.project_id
+JOIN 
+    core.observation_phys_chem opc ON rpc.observation_phys_chem_id = opc.observation_phys_chem_id
+JOIN 
+    core.specimen spc ON rpc.specimen_id = spc.specimen_id;  -- Join with core.specimen to get specimen_code
+"
+
+# Execute query and prepare shared data
+sch <- dbGetQuery(con, query)
+sch.a <- sch[, c(1,2, 7:12)] %>%
+  distinct()
+
+# Query for physical and chemical results
+query <- "
+SELECT 
+    pr.name AS project_name,
+    s.site_code,
+    rpc.result_phys_chem_id, 
+    rpc.value,
+    opc.property_phys_chem_id,
+    sp.code, -- Include code from core.specimen
+    e.profile_id,
+    ST_X(pl.position::geometry) AS longitude,  -- Extract longitude
+    ST_Y(pl.position::geometry) AS latitude   -- Extract latitude
+FROM 
+    core.result_phys_chem rpc
+JOIN 
+    core.specimen sp ON rpc.specimen_id = sp.specimen_id -- Join core.specimen for code
+JOIN 
+    core.element e ON sp.element_id = e.element_id  -- Adjusted join to link core.specimen to core.element
+JOIN 
+    core.profile p ON e.profile_id = p.profile_id
+JOIN 
+    core.plot pl ON p.plot_id = pl.plot_id
+JOIN 
+    core.site s ON pl.site_id = s.site_id
+JOIN 
+    core.project_site sp2 ON s.site_id = sp2.site_id
+JOIN 
+    core.project pr ON sp2.project_id = pr.project_id
+JOIN 
+    core.observation_phys_chem opc ON rpc.observation_phys_chem_id = opc.observation_phys_chem_id;
+"
+
+site_tibble <- dbGetQuery(con, query)
+
+
+# Transform data for better structure
+site_tibble <- site_tibble %>%
+  select(-result_phys_chem_id) %>%
+  group_by(project_name, site_code,code, property_phys_chem_id) %>%
+  summarise(value = mean(value, na.rm = TRUE), .groups = 'drop') %>%
+  ungroup() %>%
+  pivot_wider(
+    names_from = property_phys_chem_id,
+    values_from = value,
+    names_glue = "{property_phys_chem_id}"
+  ) 
+
+# Join the transformed dataframe
+sch <- left_join(sch, site_tibble, by = "code") %>%
+  mutate_if(is.numeric, round, digits = 8)
+
+# Split data into subsets
+
+sch.b <- sch[, c(10, 15:ncol(sch))] %>%
+  mutate_if(is.numeric, round, digits = 3) %>%
+  distinct()
+ sch.b <- left_join(sch.a, sch.b, by = "code") 
+ sch.b <- sch.b[, c(6, 9:ncol(sch.b))] 
+# Store data as shared objects for interactive use
+sd0 <- SharedData$new(sch, key = ~code, group = "sd1")
+sd <- SharedData$new(sch.a, group = "sd1")
+sd2 <- SharedData$new(sch.b, group = "sd1")
+
+# Add custom CSS styling for UI adjustments
+tags$head(
+  tags$style(HTML("
+    .checkbox-inline { display: inline-block; }
+    .form-group .checkbox { display: inline-block; margin-left: 10px; }
+    /* Adjust spacing and alignment as needed */
+  "))
+)
+
+```
+
+Data Query {data-icon="ion-stats-bars" data-orientation=columns}
+=====================================  
+
+## Selection {#plot-tab data-width=350}
+
+
+### Map
+
+```{r map, echo=FALSE}
+projpal <- colorFactor(plasma(8), sd$name)
+
+# Create Leaflet map and add colored circle markers
+leaflet(sd) %>%
+  addProviderTiles("Esri.WorldImagery", group = "Esri.WorldImagery") %>%
+  addProviderTiles("OpenStreetMap", group = "OpenStreetMap") %>%
+  addCircleMarkers(lng = ~longitude,
+                   lat = ~latitude,
+                   radius = 5,
+                   weight = 1,
+                   fillColor = ~projpal(project_name),
+                   stroke = TRUE,
+                   fillOpacity = 0.8,
+                   popup = ~paste(project_name, "<br>", site_code)) %>%
+  addLegend("bottomright",
+            pal = projpal,
+            values = ~project_name,
+            labels = "Data ",
+            title = "Project") %>%
+  addEasyButton(
+    easyButton(
+      icon = "fa-globe",
+      title = "Zoom to Bounds",
+      onClick = JS("function(btn, map){ map.setZoom(11); }")
+    )
+  ) %>%
+  addLayersControl(
+    baseGroups = c("Esri.WorldImagery", "OpenStreetMap"),
+    position = "topleft"
+  )
+
+
+```
+
+
+## Datatables {#data-tab .tabset .tabset-pills .tabset-fade data-width=650}
+
+### Location
+   
+```{r location}
+
+    DT::datatable(sd,
+                  extensions = c('FixedHeader', 'Buttons','Scroller','Select'),
+                  filter = 'top', 
+                  selection = 'none',
+                  class = 'cell-border stripe',
+                  editable = 'cell',
+                  rownames = FALSE,
+                  options = list(
+                    dom = 'Bfrtip',
+                    buttons = c('selectAll', 'selectNone','copy', 'csv', 'excel', 'pdf', 'print'),
+                    select = list(style = 'multi', items = 'row'),
+                    paging = TRUE,
+                    pageLength = 40,
+                    scrollX = TRUE, 
+                    scrollY = '900px',
+                    fixedHeader = TRUE,
+                    scrollCollapse = TRUE,
+                    keys=TRUE)
+                  )
+
+
+```
+
+
+### Attributes
+
+```{r attributes}
+
+    DT::datatable(sd2, extensions = c('FixedHeader','Buttons','Scroller'),
+                  filter = 'top', 
+                  selection=list(mode = 'multiple'),
+                  #selection = 'none',
+                  class = 'cell-border stripe',
+                  editable = 'cell',
+                  rownames = FALSE,
+                  options = list(
+                    dom = 'Bfrtip',
+                    buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                    select = list(style = 'multi', items = 'row'),
+                    paging = TRUE,
+                    pageLength = 40,
+                    scrollX = TRUE, 
+                    scrollY = '900px',
+                    fixedHeader = TRUE,
+                    scrollCollapse = TRUE,
+                    keys=TRUE)
+                  )
+
+
+```
+
+
+
+### Boxplot
+
+```{r boxplot}
+
+reactable(
+  sd2,
+  defaultColDef = colDef(
+    cell = data_bars(sd2$data(), text_position = "inside-base", fill_color = "#E42D3A")
+  ),
+   defaultPageSize = 40
+)
+
+```
+
+
+Information {data-orientation=rows data-icon="fa-info-circle"}
+===================================== 
+
+### Dashboard Information:
+
+This dashboard offers an interactive, user-friendly platform for exploring the **ISO 28258** domain model, incorporating spatial visualization with data table interaction.
+
+1. **Database Query**: Your query filters the soil data stored in PostgreSQL. The `filter` box utilises `crosstalk` to create interactive filters that affect both the map and the datatable. This enhances the dashboard's interactivity by allowing users to filter the displayed data dynamically.
+
+2. **Crosstalk Integration**: The application is prepared for interactivity across widgets. This enables filtering actions in one widget to automatically reflect in others.
+
+3. **Interactive Map and DataTable**: The map markers use longitude and latitude from the query, and popups display the project name and site code. The points are coloured according to their project `name`. The DataTable box includes buttons for exporting the data in various formats, enhancing usability.
+
+## Tables and Their Relationships
+
+### `project`
+- **Description**: Contains details about different projects, including their names. 
+- **Relationships**: Each project can be associated with multiple sites.
+
+### `site`
+- **Description**: Represents specific locations. 
+- **Relationships**: Each site can have multiple plots and is linked to one or more projects through the `project_site` table.
+
+### `project_site`
+- **Description**: A junction table that establishes a many-to-many relationship between sites and projects.
+- **Relationships**: Allows each site to be associated with multiple projects and vice versa.
+
+### `plot`
+- **Description**: Contains information about specific plots within a site.
+- **Relationships**: Each plot can contain multiple profiles.
+
+### `profile`
+- **Description**: Represents a detailed examination or analysis profile within a plot, potentially containing multiple elements.
+- **Relationships**: Linked to plots and can encompass various elements.
+
+### `element`
+- **Description**: Details specific elements (or specimens) within a profile, each of which can have multiple results associated with it.
+- **Relationships**: Associated with profiles and can have multiple analysis results.
+
+### `result_phys_chem`
+- **Description**: Holds the actual physical and chemical results of analyses performed on elements, including the observation values.
+- **Relationships**: Linked to elements for which the analyses were conducted.
+
+### `observation_phys_chem`
+- **Description**: Contains the definitions and labels for different types of physical and chemical observations.
+- **Relationships**: Defines the parameters for the `result_phys_chem` records.
+
+
