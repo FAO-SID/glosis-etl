@@ -55,27 +55,27 @@ All applications run inside Docker containers alongside a PostGIS database, prov
 │                    Docker Compose                        │
 │                                                          │
 │  ┌─────────────────────┐    ┌─────────────────────────┐  │
-│  │   glosis-etl        │    │    glosis-db             │  │
-│  │   (Shiny Server)    │───▶│    (PostGIS 17-3.5)      │  │
-│  │                     │    │                           │  │
-│  │  ┌───────────────┐  │    │  • ISO-28258 Schema      │  │
-│  │  │ Landing Page  │  │    │  • Spatial Queries        │  │
-│  │  │ (index.html)  │  │    │  • Persistent Storage     │  │
+│  │   glosis-etl        │    │    glosis-db            │  │
+│  │   (Shiny Server)    │───▶│    (PostGIS 17-3.5)     │  │
+│  │                     │    │                         │  │
+│  │  ┌───────────────┐  │    │  • ISO-28258 Schema     │  │
+│  │  │ Landing Page  │  │    │  • Spatial Queries      │  │
+│  │  │ (index.html)  │  │    │  • Persistent Storage   │  │
 │  │  ├───────────────┤  │    └─────────────────────────┘  │
-│  │  │ /harmonization│  │                                  │
+│  │  │ /harmonization│  │                                 │
 │  │  ├───────────────┤  │    ┌─────────────────────────┐  │
-│  │  │/standardizat. │  │    │  pgAdmin (optional)      │  │
-│  │  ├───────────────┤  │    │  Profile: "admin"        │  │
+│  │  │/standardizat. │  │    │  pgAdmin (optional)     │  │
+│  │  ├───────────────┤  │    │  Profile: "admin"       │  │
 │  │  │ /dataviewer   │  │    └─────────────────────────┘  │
-│  │  └───────────────┘  │                                  │
-│  └─────────────────────┘                                  │
+│  │  └───────────────┘  │                                 │
+│  └─────────────────────┘                                 │
 └──────────────────────────────────────────────────────────┘
 ```
 
-| Service        | Port   | Description                                |
-|----------------|--------|--------------------------------------------|
-| `glosis-etl`   | `3838` | Landing page + Shiny applications          |
-| `postgis`      | `5442` | PostgreSQL with PostGIS (mapped to host)   |
+| Service        | Port   | Description                                  |
+|----------------|--------|----------------------------------------------|
+| `glosis-etl`   | `3838` | Landing page + Shiny applications            |
+| `postgis`      | `5442` | PostgreSQL with PostGIS (mapped to host)     |
 | `pgadmin`      | `5050` | pgAdmin web UI (optional, `--profile admin`) |
 
 ---
@@ -142,13 +142,13 @@ docker compose up -d --build
 
 ### Environment Variables (`.env`)
 
-| Variable             | Default   | Description                          |
-|----------------------|-----------|--------------------------------------|
-| `POSTGRES_DB`        | `glosis`  | Database name                        |
-| `POSTGRES_USER`      | `glosis`  | Database admin username              |
-| `POSTGRES_PASSWORD`  | `glosis`  | Database admin password              |
+| Variable             | Default   | Description                                      |
+|----------------------|-----------|--------------------------------------------------|
+| `POSTGRES_DB`        | `glosis`  | Database name                                    |
+| `POSTGRES_USER`      | `glosis`  | Database admin username                          |
+| `POSTGRES_PASSWORD`  | `glosis`  | Database admin password                          |
 | `SHINY_LOG_LEVEL`    | `INFO`    | Logging level (`DEBUG`, `INFO`, `WARN`, `ERROR`) |
-| `R_MAX_MEM_SIZE`     | `2Gb`     | R memory limit                       |
+| `R_MAX_MEM_SIZE`     | `2Gb`     | R memory limit                                   |
 
 ### Database Credentials (`init-scripts/credentials.R`)
 
