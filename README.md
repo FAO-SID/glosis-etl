@@ -1,19 +1,19 @@
-<![CDATA[<p align="center">
+<p align="center">
   <img src="www/fao_logo1.png" alt="FAO Logo" height="120">
 </p>
 
 <h1 align="center">GloSIS ETL Platform</h1>
 
 <p align="center">
-  <strong>Soil Data Harmonization, Standardization & Visualization</strong><br>
+  <strong>Soil Data Harmonization, Standardization &amp; Visualization</strong><br>
   A Dockerized platform for transforming heterogeneous soil datasets into the <a href="https://www.fao.org/global-soil-partnership/areas-of-work/soil-information-and-data/en/">GloSIS ISO-28258</a> standard.
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/R-4.3.2-blue?logo=r" alt="R Version">
   <img src="https://img.shields.io/badge/Shiny_Server-Open_Source-green?logo=rstudio" alt="Shiny Server">
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
-  <img src="https://img.shields.io/badge/PostgreSQL-PostGIS-336791?logo=postgresql&logoColor=white" alt="PostGIS">
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&amp;logoColor=white" alt="Docker Compose">
+  <img src="https://img.shields.io/badge/PostgreSQL-PostGIS-336791?logo=postgresql&amp;logoColor=white" alt="PostGIS">
   <img src="https://img.shields.io/badge/Platform-amd64%20%7C%20arm64-orange" alt="Multi-Platform">
 </p>
 
@@ -82,7 +82,7 @@ All applications run inside Docker containers alongside a PostGIS database, prov
 
 ## Prerequisites
 
-- **Docker Desktop** ≥ 4.0 (or Docker Engine + Docker Compose v2)
+- **Docker Desktop** >= 4.0 (or Docker Engine + Docker Compose v2)
   - [Download for macOS](https://docs.docker.com/desktop/install/mac-install/)
   - [Download for Windows](https://docs.docker.com/desktop/install/windows-install/)
   - [Download for Linux](https://docs.docker.com/desktop/install/linux/)
@@ -99,8 +99,8 @@ All applications run inside Docker containers alongside a PostGIS database, prov
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/FAO-SID/Glosis-ETL.git
-cd Glosis-ETL
+git clone https://github.com/FAO-SID/glosis-etl.git
+cd glosis-etl
 ```
 
 ### 2. Configure Environment Variables
@@ -114,8 +114,10 @@ Edit `.env` to customize your database credentials (defaults work out of the box
 ```env
 POSTGRES_DB=glosis
 POSTGRES_USER=glosis
-POSTGRES_PASSWORD=glosis        # ⚠️ Change in production!
+POSTGRES_PASSWORD=glosis
 ```
+
+> **Warning**: Change the password in production environments!
 
 ### 3. Build and Start
 
@@ -123,7 +125,7 @@ POSTGRES_PASSWORD=glosis        # ⚠️ Change in production!
 docker compose up -d --build
 ```
 
-> **First build** may take 10–20 minutes (R package compilation). Subsequent builds use Docker cache and are much faster.
+> **First build** may take 10-20 minutes (R package compilation). Subsequent builds use Docker cache and are much faster.
 
 ### 4. Access the Platform
 
@@ -172,9 +174,9 @@ Each application has its own detailed documentation:
 
 | App | Description | Docs |
 |-----|-------------|------|
-| 🔄 **Harmonization** | Convert raw soil data to GloSIS format | [apps/harmonization/README.md](apps/harmonization/README.md) |
-| 📥 **Standardization** | Inject harmonized data into GloSIS database | [apps/standardization/README.md](apps/standardization/README.md) |
-| 🗺️ **Data Viewer** | Explore and visualize ingested data | [apps/dataviewer/README.md](apps/dataviewer/README.md) |
+| **Harmonization** | Convert raw soil data to GloSIS format | [apps/harmonization/README.md](apps/harmonization/README.md) |
+| **Standardization** | Inject harmonized data into GloSIS database | [apps/standardization/README.md](apps/standardization/README.md) |
+| **Data Viewer** | Explore and visualize ingested data | [apps/dataviewer/README.md](apps/dataviewer/README.md) |
 
 ---
 
@@ -201,7 +203,7 @@ glosis-etl/
 │   │   ├── README.md
 │   │   ├── ui.R
 │   │   ├── server.R
-│   │   ├── global.R               # Global settings & helpers
+│   │   ├── global.R               # Global settings and helpers
 │   │   ├── fill_tables.R          # Database injection logic
 │   │   ├── dashboard.Rmd          # Flexdashboard report template
 │   │   ├── credentials.R          # DB credentials (app-level)
@@ -264,7 +266,7 @@ Password: glosis
 
 ### Running Apps Locally (Outside Docker)
 
-> Requires R ≥ 4.3 and all dependencies installed locally.
+> Requires R >= 4.3 and all dependencies installed locally.
 
 1. Start only the database:
    ```bash
@@ -304,7 +306,7 @@ docker compose logs -f postgis
 # Stop all services (data is preserved)
 docker compose down
 
-# Stop and remove all data (⚠️ destructive)
+# Stop and remove all data (destructive!)
 docker compose down -v
 ```
 
@@ -314,11 +316,11 @@ docker compose down -v
 
 | Issue | Solution |
 |-------|----------|
-| **Build fails on Apple Silicon** | Ensure Docker Desktop ≥ 4.25. The Dockerfile handles arm64 natively. |
+| **Build fails on Apple Silicon** | Ensure Docker Desktop >= 4.25. The Dockerfile handles arm64 natively. |
 | **"Connection refused" to database** | Wait for the health check (`docker compose ps`). PostGIS needs ~30s to initialize. |
 | **Apps show blank page** | Check Shiny logs: `docker compose logs glosis-etl` |
 | **Port 3838/5442 already in use** | Change port mapping in `docker-compose.yml` (e.g., `"3839:3838"`) |
-| **Out of memory during R package install** | Increase Docker memory to ≥ 4 GB in Docker Desktop → Settings → Resources |
+| **Out of memory during R package install** | Increase Docker memory to >= 4 GB in Docker Desktop Settings Resources |
 | **Schema not loaded** | Verify `init-scripts/glosis-db_latest.sql` is present. The schema loads only on first database creation. To reload: `docker compose down -v && docker compose up -d` |
 
 ---
@@ -333,5 +335,4 @@ This project is developed by the **Global Soil Partnership** at the **Food and A
 
 - **Author**: Luis Rodriguez Lado — [luis.rodriguezlado@fao.org](mailto:luis.rodriguezlado@fao.org)
 - **Organization**: [FAO Global Soil Partnership](https://www.fao.org/global-soil-partnership/)
-- **Repository**: [github.com/FAO-SID/Glosis-ETL](https://github.com/FAO-SID/Glosis-ETL)
-]]>
+- **Repository**: [github.com/FAO-SID/glosis-etl](https://github.com/FAO-SID/glosis-etl)
