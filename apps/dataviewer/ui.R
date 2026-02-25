@@ -24,11 +24,11 @@ ui <- dashboardPage(
     title = "GloSIS Database Viewer",
     tags$li(
       class = "dropdown",
-      tags$img(
-        src = "../www/fao_logo1.png",
-        height = "40px",
-        style = "position: absolute; right: 20px; top: 5px;"
-      )
+      # tags$img(
+      #   src = "../www/fao_logo1.png",
+      #   height = "40px",
+      #   style = "position: absolute; right: 20px; top: 5px;"
+      # )
     ),
     titleWidth = 300
   ),
