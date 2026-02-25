@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="www/fao_logo1.png" alt="FAO Logo" height="120">
-</p>
+
 
 <h1 align="center">GloSIS ETL Platform</h1>
 
